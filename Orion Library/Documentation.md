@@ -314,7 +314,7 @@ OrionLib:Destroy()
 
 # NoobZ Changes
 
-## Stream Mode
+### Stream Mode
 ```lua
 OrionLib:StreamMode(State)
 
@@ -324,9 +324,9 @@ State = <bool> - Will activate or deactivate the Stream Mode.
 ]]
 ```
 
-### Theme
+## Theme
 
-## Changing Theme
+### Changing Theme
 You can change the Theme by using:
 ```lua
 OrionLib:Theme(ThemeName)
@@ -345,7 +345,7 @@ Themes:
 ]]
 ```
 
-## Changing Background Transparency
+### Changing Background Transparency
 You can change the Property 'BackgroundTransparency' from the Window by using:
 ```lua
 OrionLib:SetBackgroundTransparency(Transparency)
@@ -357,7 +357,7 @@ Default: 0.2
 ]]
 ```
 
-## Getting the Current Theme Selected
+### Getting the Current Theme Selected
 Get the current selected Theme by using:
 ```lua
 OrionLib:GetTheme()
@@ -367,9 +367,9 @@ You can print it by using 'print()', like:
 print(tostring(OrionLib:GetTheme()))
 ```
 
-### Custom Theme
+## Custom Theme
 
-## Customizing Theme
+### Customizing Theme
 By using the Custom Theme, you can change it colors by using:
 ```lua
 OrionLib:CustomThemeChange(Asset, Value)
@@ -388,13 +388,13 @@ Assets:
 ]]
 ```
 
-## Reseting Custom Theme
+### Reseting Custom Theme
 You can reset the whole Custom Theme just by using:
 ```lua
 OrionLib:ResetCustomTheme()
 ```
 
-## Getting the Color from some Asset in Custom Theme
+### Getting the Color from some Asset in Custom Theme
 If you want to know what the Color from some Asset, you can use:
 ```lua
 OrionLib:GetCustomThemeValue(Asset)
