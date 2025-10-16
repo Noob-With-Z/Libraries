@@ -35,5 +35,5 @@ OrionLib:StreamMode(true) <----- Here, after the MakeWindow
 
 You can easily and quick testing all this features by executing this loadstring:
 ```lua
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Noob-With-Z/Libraries/refs/heads/main/Orion%20Library/Test.lua"))()
 ```
