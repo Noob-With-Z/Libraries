@@ -23,13 +23,13 @@ You can turn if off by changing the *true* with *false*.
 Disclaimer: You need to execute the function Stream Mode after setup the Window, before it, it'll not working.
 
 Like:
-[[
+```lua
 local Window = OrionLib:MakeWindow({
 	blah blah blah settings
 })
 
 OrionLib:StreamMode(true) <----- Here, after the MakeWindow
-]]
+```
 
 ## Testing
 
