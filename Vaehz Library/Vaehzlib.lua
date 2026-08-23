@@ -295,6 +295,7 @@ end
 ----------------------------------------------------------------------
 function Library:CreateWindow(cfg)
 	cfg = cfg or {}
+	cfg.Social = cfg.Social or {}
 	if cfg.Accent then Theme.Accent = cfg.Accent end
 
 	local Window = { Tabs = {}, _current = nil }
@@ -303,7 +304,7 @@ function Library:CreateWindow(cfg)
 		Name = "Window",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.fromOffset(532, 410),
+		Size = cfg.Size or UDim2.fromOffset(532, 410), -- size cfg: UDim2.new(XScale, XOffset, YScale, YOffset)
 		BackgroundColor3 = Theme.Background,
 		BackgroundTransparency = 0.05,
 		BorderSizePixel = 0,
@@ -327,13 +328,16 @@ function Library:CreateWindow(cfg)
 	addShadow(TopBar, 10, 0.86)
 
 	create("TextLabel", {
-		Name = "Title", Text = cfg.Title or "Lib Name",
+		Name = "Title", Text = cfg.Title or "Window Name",
 		FontFace = FONT_TITLE, TextColor3 = Theme.Text, TextSize = 16,
 		TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true,
 		BackgroundTransparency = 1, AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 16, 0.5, 0), Size = UDim2.new(0, 300, 0, 22),
 		Parent = TopBar,
 	})
+	local YT_LINK = cfg.Social.YT or ""
+	local DC_LINK = cfg.Social.DC and ""
+	local DC_CODE = cfg.Social.DCCode or ""
 
 	local function ctrlBtn(iconName, offsetX, hoverColor)
 		local b = create("TextButton", {
@@ -355,19 +359,23 @@ function Library:CreateWindow(cfg)
 			tween(b, TI, { BackgroundTransparency = 1 })
 			tween(ic, TI, { TextColor3 = Theme.SubText })
 		end)
+
+		if iconName == "youtube" and YT_LINK == "" then
+			b.Visible = false
+		elseif iconName == "discord" and DC_LINK == "" then
+			b.Visible = false
+		end
+		
 		return b
 	end
 
 	local CloseBtn = ctrlBtn("x", -10, Color3.fromRGB(255, 90, 90))
 	local MinBtn   = ctrlBtn("minus", -42, Theme.Text)
 	local YtBtn    = ctrlBtn("youtube", -74, Color3.fromRGB(255, 60, 60))
-	local DcBtn    = ctrlBtn("discord", -106, Color3.fromRGB(88, 101, 242))
-
-	local YT_LINK = "https://youtube.com/@vaehz"
-	local DC_LINK = "https://discord.gg/vaehz"
-	local DC_CODE = "vaehz"
+	local DcBtn    = ctrlBtn("discord", YtBtn.Visible and -106 or -74, Color3.fromRGB(88, 101, 242))
 
 	YtBtn.Activated:Connect(function()
+		if not YtBtn.Visible then return end
 		local copied = copyToClipboard(YT_LINK)
 		Library:Notify({
 			Title = "YouTube",
@@ -377,6 +385,7 @@ function Library:CreateWindow(cfg)
 	end)
 
 	DcBtn.Activated:Connect(function()
+		if not DcBtn.Visible then return end
 		local copied = copyToClipboard(DC_LINK)
 		local opened = openDiscordInvite(DC_CODE)
 		local msg
