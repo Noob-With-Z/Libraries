@@ -300,11 +300,13 @@ function Library:CreateWindow(cfg)
 
 	local Window = { Tabs = {}, _current = nil }
 
+    local WindowSize = cfg.Size or UDim2.fromOffset(532, 410)
+
 	local BG = create("CanvasGroup", {
 		Name = "Window",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = cfg.Size or UDim2.fromOffset(532, 410), -- size cfg: UDim2.new(XScale, XOffset, YScale, YOffset)
+		Size = WindowSize, -- size cfg: UDim2.new(XScale, XOffset, YScale, YOffset)
 		BackgroundColor3 = Theme.Background,
 		BackgroundTransparency = 0.05,
 		BorderSizePixel = 0,
@@ -438,16 +440,28 @@ function Library:CreateWindow(cfg)
 	end)
 
 	local minimized = false
-	MinBtn.Activated:Connect(function()
-		minimized = not minimized
-		if minimized then
-			Body.Visible = false
-			tween(BG, TI_S, { Size = UDim2.fromOffset(532, 45) })
-		else
-			tween(BG, TI_S, { Size = UDim2.fromOffset(532, 410) })
-			task.wait(0.12); Body.Visible = true
-		end
-	end)
+
+MinBtn.Activated:Connect(function()
+    minimized = not minimized
+    if minimized then
+        Body.Visible = false
+        tween(BG, TI_S, {
+            Size = UDim2.new(
+                WindowSize.X.Scale,
+                WindowSize.X.Offset,
+                0,
+                45
+            )
+        })
+    else
+        tween(BG, TI_S, {
+            Size = WindowSize
+        })
+        task.wait(0.12)
+        Body.Visible = true
+    end
+end)
+
 
 	-- Toggle visibility keybind (desktop)
 	local hidden = false
