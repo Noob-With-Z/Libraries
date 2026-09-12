@@ -204,7 +204,7 @@ local ScreenGui = create("ScreenGui", {
 	IgnoreGuiInset = true,
 	DisplayOrder = 999,
 })
-pcall(function() if syn and syn.protect_gui then syn.protect_gui(ScreenGui) end end)
+
 ScreenGui.Parent = getGuiParent()
 
 -- Notification stack (bottom-right)
@@ -300,7 +300,7 @@ function Library:CreateWindow(cfg)
 
 	local Window = { Tabs = {}, _current = nil }
 
-    local WindowSize = cfg.Size or UDim2.fromOffset(532, 410)
+	local WindowSize = cfg.Size or UDim2.fromOffset(532, 410)
 
 	local BG = create("CanvasGroup", {
 		Name = "Window",
@@ -330,73 +330,140 @@ function Library:CreateWindow(cfg)
 	addShadow(TopBar, 10, 0.86)
 
 	create("TextLabel", {
-		Name = "Title", Text = cfg.Title or "Window Name",
-		FontFace = FONT_TITLE, TextColor3 = Theme.Text, TextSize = 16,
-		TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true,
-		BackgroundTransparency = 1, AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 16, 0.5, 0), Size = UDim2.new(0, 300, 0, 22),
+		Name = "Title",
+		Text = cfg.Title or "Window Name",
+		FontFace = FONT_TITLE,
+		TextColor3 = Theme.Text,
+		TextSize = 16,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextWrapped = true,
+		BackgroundTransparency = 1,
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.new(0, 16, 0.5, 0),
+		Size = UDim2.new(0, 300, 0, 22),
 		Parent = TopBar,
 	})
+
 	local YT_LINK = cfg.Social.YT or ""
-	local DC_LINK = cfg.Social.DC and ""
+	local DC_LINK = cfg.Social.DC or ""
 	local DC_CODE = cfg.Social.DCCode or ""
 
-	local function ctrlBtn(iconName, offsetX, hoverColor)
+	local function ctrlBtn(iconName, offsetX, hoverColor, link)
 		local b = create("TextButton", {
-			Text = "", AutoButtonColor = false, BackgroundColor3 = Theme.Element,
-			BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0.5),
-			Position = UDim2.new(1, offsetX, 0.5, 0), Size = UDim2.fromOffset(26, 26),
+			Text = "",
+			AutoButtonColor = false,
+			BackgroundColor3 = Theme.Element,
+			BackgroundTransparency = 1,
+			AnchorPoint = Vector2.new(1, 0.5),
+			Position = UDim2.new(1, offsetX, 0.5, 0),
+			Size = UDim2.fromOffset(26, 26),
 			Parent = TopBar,
 		})
+
 		corner(b, 6)
+
 		local ic = icon(iconName, 16, false, Theme.SubText)
 		ic.AnchorPoint = Vector2.new(0.5, 0.5)
 		ic.Position = UDim2.new(0.5, 0, 0.5, 0)
 		ic.Parent = b
+
 		b.MouseEnter:Connect(function()
-			tween(b, TI, { BackgroundTransparency = 0 })
-			tween(ic, TI, { TextColor3 = hoverColor or Theme.Text })
-		end)
-		b.MouseLeave:Connect(function()
-			tween(b, TI, { BackgroundTransparency = 1 })
-			tween(ic, TI, { TextColor3 = Theme.SubText })
+			tween(b, TI, {
+				BackgroundTransparency = 0,
+			})
+
+			tween(ic, TI, {
+				TextColor3 = hoverColor or Theme.Text,
+			})
 		end)
 
-		if iconName == "youtube" and YT_LINK == "" then
-			b.Visible = false
-		elseif iconName == "discord" and DC_LINK == "" then
-			b.Visible = false
-		end
-		
+		b.MouseLeave:Connect(function()
+			tween(b, TI, {
+				BackgroundTransparency = 1,
+			})
+
+			tween(ic, TI, {
+				TextColor3 = Theme.SubText,
+			})
+		end)
+
+		b.Visible = link ~= nil and link ~= ""
+
 		return b
 	end
 
-	local CloseBtn = ctrlBtn("x", -10, Color3.fromRGB(255, 90, 90))
-	local MinBtn   = ctrlBtn("minus", -42, Theme.Text)
-	local YtBtn    = ctrlBtn("youtube", -74, Color3.fromRGB(255, 60, 60))
-	local DcBtn    = ctrlBtn("discord", YtBtn.Visible and -106 or -74, Color3.fromRGB(88, 101, 242))
+	local hasYoutube = YT_LINK ~= ""
+	local hasDiscord = DC_LINK ~= ""
+
+	local CloseBtn = ctrlBtn(
+		"x",
+		-10,
+		Color3.fromRGB(255, 90, 90)
+	)
+
+	local MinBtn = ctrlBtn(
+		"minus",
+		-42,
+		Theme.Text
+	)
+
+	local YtBtn = ctrlBtn(
+		"youtube",
+		-74,
+		Color3.fromRGB(255, 60, 60),
+		YT_LINK
+	)
+
+	local DcBtn = ctrlBtn(
+		"discord",
+		hasYoutube and -106 or -74,
+		Color3.fromRGB(88, 101, 242),
+		DC_LINK
+	)
 
 	YtBtn.Activated:Connect(function()
-		if not YtBtn.Visible then return end
+		if not hasYoutube then
+			return
+		end
+
 		local copied = copyToClipboard(YT_LINK)
+
 		Library:Notify({
 			Title = "YouTube",
-			Content = copied and "Channel link copied to clipboard" or "Clipboard unavailable: " .. YT_LINK,
+			Content = copied
+				and "Channel link copied to clipboard"
+				or "Clipboard unavailable: " .. YT_LINK,
 			Duration = 3,
 		})
 	end)
 
 	DcBtn.Activated:Connect(function()
-		if not DcBtn.Visible then return end
+		if not hasDiscord then
+			return
+		end
+
 		local copied = copyToClipboard(DC_LINK)
 		local opened = openDiscordInvite(DC_CODE)
+
 		local msg
-		if opened and copied then msg = "Opening invite - link also copied"
-		elseif opened then msg = "Opening invite in Discord"
-		elseif copied then msg = "Invite link copied to clipboard"
-		else msg = "Clipboard unavailable: " .. DC_LINK end
-		Library:Notify({ Title = "Discord", Content = msg, Duration = 3 })
+
+		if opened and copied then
+			msg = "Opening invite - link also copied"
+		elseif opened then
+			msg = "Opening invite in Discord"
+		elseif copied then
+			msg = "Invite link copied to clipboard"
+		else
+			msg = "Clipboard unavailable: " .. DC_LINK
+		end
+
+		Library:Notify({
+			Title = "Discord",
+			Content = msg,
+			Duration = 3,
+		})
 	end)
+
 
 	-- Body
 	local Body = create("Frame", {
@@ -441,26 +508,26 @@ function Library:CreateWindow(cfg)
 
 	local minimized = false
 
-MinBtn.Activated:Connect(function()
-    minimized = not minimized
-    if minimized then
-        Body.Visible = false
-        tween(BG, TI_S, {
-            Size = UDim2.new(
-                WindowSize.X.Scale,
-                WindowSize.X.Offset,
-                0,
-                45
-            )
-        })
-    else
-        tween(BG, TI_S, {
-            Size = WindowSize
-        })
-        task.wait(0.12)
-        Body.Visible = true
-    end
-end)
+	MinBtn.Activated:Connect(function()
+		minimized = not minimized
+		if minimized then
+			Body.Visible = false
+			tween(BG, TI_S, {
+				Size = UDim2.new(
+					WindowSize.X.Scale,
+					WindowSize.X.Offset,
+					0,
+					45
+				)
+			})
+		else
+			tween(BG, TI_S, {
+				Size = WindowSize
+			})
+			task.wait(0.12)
+			Body.Visible = true
+		end
+	end)
 
 
 	-- Toggle visibility keybind (desktop)
@@ -620,7 +687,7 @@ end)
 				Size = UDim2.new(1, 0, 0, 36), LayoutOrder = Tab._order, BorderSizePixel = 0, Parent = page,
 			})
 			corner(btnEl, 6); stroke(btnEl, Theme.Stroke, STROKE_T)
-			create("TextLabel", {
+			local bTextLabel = create("TextLabel", {
 				BackgroundTransparency = 1, Text = bcfg.Name or "Button",
 				FontFace = FONT_MAIN, TextColor3 = Theme.Text, TextSize = 14,
 				Size = UDim2.new(1, 0, 1, 0), Parent = btnEl,
@@ -632,7 +699,7 @@ end)
 				task.wait(0.12); tween(btnEl, TI, { BackgroundColor3 = Theme.Element })
 				if bcfg.Callback then task.spawn(bcfg.Callback) end
 			end)
-			return { Instance = btnEl }
+			return { SetName = function(self, n) bTextLabel.Text = n end, Instance = btnEl }
 		end
 
 		------------------------------------------------------------
@@ -643,7 +710,7 @@ end)
 			local state = tocfg.Default or false
 			local row = newRow(36)
 			local btnEl = create("TextButton", { Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Parent = row })
-			create("TextLabel", {
+			local ToggleTextLabel = create("TextLabel", {
 				BackgroundTransparency = 1, Text = tocfg.Name or "Toggle",
 				FontFace = FONT_MAIN, TextColor3 = Theme.Text, TextSize = 14,
 				TextXAlignment = Enum.TextXAlignment.Left, AnchorPoint = Vector2.new(0, 0.5),
@@ -669,6 +736,9 @@ end)
 				tween(knob, TI, { Position = state and UDim2.new(1, -18, 0.5, 0) or UDim2.new(0, 2, 0.5, 0) })
 				if tocfg.Callback then task.spawn(tocfg.Callback, state) end
 			end
+			function api:SetName(text)
+				ToggleTextLabel.Text = text
+			end
 			function api:Get() return state end
 			btnEl.Activated:Connect(function() api:Set(not state) end)
 			if state and tocfg.Callback then task.spawn(tocfg.Callback, true) end
@@ -682,7 +752,7 @@ end)
 		function Tab:CreateStat(scfg)
 			scfg = scfg or {}
 			local row = newRow(34)
-			create("TextLabel", {
+			local statText = create("TextLabel", {
 				BackgroundTransparency = 1, Text = scfg.Name or "Stat",
 				FontFace = FONT_MAIN, TextColor3 = Theme.SubText, TextSize = 14,
 				TextXAlignment = Enum.TextXAlignment.Left, AnchorPoint = Vector2.new(0, 0.5),
@@ -695,7 +765,7 @@ end)
 				AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0),
 				Size = UDim2.new(0.5, -10, 1, 0), Parent = row,
 			})
-			return { Set = function(_, v) valLbl.Text = tostring(v) end, Instance = row }
+			return { Set = function(_, v) valLbl.Text = tostring(v) end, SetName = function(_, text) statText.Text = text end, Instance = row }
 		end
 
 		------------------------------------------------------------
@@ -708,7 +778,7 @@ end)
 			local value = math.clamp(slcfg.Default or min, min, max)
 			local row = newRow(50)
 
-			create("TextLabel", {
+			local sliderText = create("TextLabel", {
 				BackgroundTransparency = 1, Text = slcfg.Name or "Slider",
 				FontFace = FONT_MAIN, TextColor3 = Theme.Text, TextSize = 14,
 				TextXAlignment = Enum.TextXAlignment.Left, Position = UDim2.new(0, 10, 0, 6),
@@ -748,6 +818,9 @@ end)
 				valLbl.Text = tostring(value)
 				if fire and slcfg.Callback then task.spawn(slcfg.Callback, value) end
 			end
+			function api:SetName(text)
+				sliderText.Text = text
+			end
 			bindDrag(track, function(ax) apply(ax, true) end)
 			function api:Set(v) apply((math.clamp(v, min, max) - min) / (max - min), true) end
 			function api:Get() return value end
@@ -761,7 +834,7 @@ end)
 		function Tab:CreateTextbox(txcfg)
 			txcfg = txcfg or {}
 			local row = newRow(36)
-			create("TextLabel", {
+			local TBText = create("TextLabel", {
 				BackgroundTransparency = 1, Text = txcfg.Name or "Textbox",
 				FontFace = FONT_MAIN, TextColor3 = Theme.Text, TextSize = 14,
 				TextXAlignment = Enum.TextXAlignment.Left, AnchorPoint = Vector2.new(0, 0.5),
@@ -798,6 +871,7 @@ end)
 			return {
 				Set = function(_, t) tb.Text = t end,
 				Get = function() return tb.Text end,
+				SetName = function(_, t) TBText.Text = t end,
 				Instance = row,
 			}
 		end
@@ -813,7 +887,7 @@ end)
 			local row = newRow(36)
 			row.ClipsDescendants = true
 			local header = create("TextButton", { Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 36), Parent = row })
-			create("TextLabel", {
+			local PickerText = create("TextLabel", {
 				BackgroundTransparency = 1, Text = ccfg.Name or "Color",
 				FontFace = FONT_MAIN, TextColor3 = Theme.Text, TextSize = 14,
 				TextXAlignment = Enum.TextXAlignment.Left, AnchorPoint = Vector2.new(0, 0.5),
@@ -901,6 +975,9 @@ end)
 			local api = {}
 			function api:Set(c) h, s, v = c:ToHSV(); refresh(true) end
 			function api:Get() return color end
+			function api:SetName(text)
+				PickerText.Text = text
+			end
 			api.Instance = row
 			return api
 		end
@@ -922,7 +999,7 @@ end)
 			local row = newRow(36)
 			row.ClipsDescendants = true
 			local header = create("TextButton", { Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 36), Parent = row })
-			create("TextLabel", {
+			local DropdownText = create("TextLabel", {
 				BackgroundTransparency = 1, Text = dcfg.Name or "Dropdown",
 				FontFace = FONT_MAIN, TextColor3 = Theme.Text, TextSize = 14,
 				TextXAlignment = Enum.TextXAlignment.Left, AnchorPoint = Vector2.new(0, 0.5),
@@ -1044,9 +1121,16 @@ end)
 				for _, o in options do if selected[o] then table.insert(out, o) end end
 				return multi and out or out[1]
 			end
+			function api:SetName(text)
+				DropdownText.Text = text
+			end
 			api.Instance = row
 			rebuild()
 			return api
+		end
+
+		function Tab:SetName(text)
+			nameLbl.Text = text
 		end
 
 		return Tab
