@@ -986,147 +986,297 @@ function Library:CreateWindow(cfg)
 		------------------------------------------------------------
 		-- 9. Dropdown (single or multi, inline expand)
 		------------------------------------------------------------
+
 		function Tab:CreateDropdown(dcfg)
 			dcfg = dcfg or {}
 			local options = dcfg.Options or {}
 			local multi = dcfg.Multi or false
 			local selected = {}
+
 			if dcfg.Default then
 				if type(dcfg.Default) == "table" then
-					for _, d in dcfg.Default do selected[d] = true end
-				else selected[dcfg.Default] = true end
+					for k, v in pairs(dcfg.Default) do
+						if type(k) == "number" then
+							selected[v] = true
+						elseif v == true then
+							selected[k] = true
+						end
+					end
+				else
+					selected[dcfg.Default] = true
+				end
 			end
 
 			local row = newRow(36)
 			row.ClipsDescendants = true
-			local header = create("TextButton", { Text = "", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 36), Parent = row })
+
+			local header = create("TextButton", {
+				Text = "",
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 36),
+				Parent = row
+			})
+
 			local DropdownText = create("TextLabel", {
-				BackgroundTransparency = 1, Text = dcfg.Name or "Dropdown",
-				FontFace = FONT_MAIN, TextColor3 = Theme.Text, TextSize = 14,
-				TextXAlignment = Enum.TextXAlignment.Left, AnchorPoint = Vector2.new(0, 0.5),
-				Position = UDim2.new(0, 10, 0.5, 0), Size = UDim2.new(0.5, 0, 1, 0), Parent = header,
+				BackgroundTransparency = 1,
+				Text = dcfg.Name or "Dropdown",
+				FontFace = FONT_MAIN,
+				TextColor3 = Theme.Text,
+				TextSize = 14,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				AnchorPoint = Vector2.new(0, 0.5),
+				Position = UDim2.new(0, 10, 0.5, 0),
+				Size = UDim2.new(0.5, 0, 1, 0),
+				Parent = header,
 			})
+
 			local valLbl = create("TextLabel", {
-				BackgroundTransparency = 1, Text = "",
-				FontFace = FONT_MAIN, TextColor3 = Theme.SubText, TextSize = 13,
-				TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd,
-				AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -32, 0.5, 0),
-				Size = UDim2.new(0.5, -8, 1, 0), Parent = header,
+				BackgroundTransparency = 1,
+				Text = "",
+				FontFace = FONT_MAIN,
+				TextColor3 = Theme.SubText,
+				TextSize = 13,
+				TextXAlignment = Enum.TextXAlignment.Right,
+				TextTruncate = Enum.TextTruncate.AtEnd,
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(1, -32, 0.5, 0),
+				Size = UDim2.new(0.5, -8, 1, 0),
+				Parent = header,
 			})
+
 			local chev = icon("chevron-down", 16, false, Theme.SubText)
 			chev.AnchorPoint = Vector2.new(1, 0.5)
 			chev.Position = UDim2.new(1, -10, 0.5, 0)
 			chev.Parent = header
 
 			local list = create("Frame", {
-				BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 36),
-				Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
-				Visible = false, Parent = row,
+				BackgroundTransparency = 1,
+				Position = UDim2.new(0, 0, 0, 36),
+				Size = UDim2.new(1, 0, 0, 0),
+				AutomaticSize = Enum.AutomaticSize.Y,
+				Visible = false,
+				Parent = row,
 			}, {
-				create("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder }),
-				create("UIPadding", { PaddingLeft = UDim.new(0,8), PaddingRight = UDim.new(0,8), PaddingBottom = UDim.new(0,8) }),
+				create("UIListLayout", {
+					Padding = UDim.new(0, 2),
+					SortOrder = Enum.SortOrder.LayoutOrder
+				}),
+				create("UIPadding", {
+					PaddingLeft = UDim.new(0, 8),
+					PaddingRight = UDim.new(0, 8),
+					PaddingBottom = UDim.new(0, 8)
+				}),
 			})
 
 			local function updateValLabel()
 				local picked = {}
-				for _, o in options do if selected[o] then table.insert(picked, o) end end
+
+				for _, o in options do
+					if selected[o] then
+						table.insert(picked, o)
+					end
+				end
+
 				valLbl.Text = #picked == 0 and "None" or table.concat(picked, ", ")
 			end
 
 			local api = {}
 			local optionBtns = {}
 
+			-- Changed event
+			local Changed = Instance.new("BindableEvent")
+			api.Changed = Changed.Event
+
 			local function rebuild()
-				for _, b in optionBtns do b.btn:Destroy() end
+				for _, b in optionBtns do
+					b.btn:Destroy()
+				end
+
 				table.clear(optionBtns)
+
 				for i, opt in options do
 					local ob = create("TextButton", {
-						Text = "", AutoButtonColor = false, BackgroundColor3 = Theme.Secondary,
-						Size = UDim2.new(1, 0, 0, 28), LayoutOrder = i, BorderSizePixel = 0, Parent = list,
+						Text = "",
+						AutoButtonColor = false,
+						BackgroundColor3 = Theme.Secondary,
+						Size = UDim2.new(1, 0, 0, 28),
+						LayoutOrder = i,
+						BorderSizePixel = 0,
+						Parent = list,
 					})
+
 					corner(ob, 5)
+
 					local txt = create("TextLabel", {
-						BackgroundTransparency = 1, Text = opt, FontFace = FONT_MAIN,
-						TextColor3 = selected[opt] and Theme.Accent or Theme.SubText, TextSize = 13,
-						TextXAlignment = Enum.TextXAlignment.Left, Position = UDim2.new(0, 8, 0, 0),
-						Size = UDim2.new(1, -30, 1, 0), Parent = ob,
+						BackgroundTransparency = 1,
+						Text = opt,
+						FontFace = FONT_MAIN,
+						TextColor3 = selected[opt] and Theme.Accent or Theme.SubText,
+						TextSize = 13,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						Position = UDim2.new(0, 8, 0, 0),
+						Size = UDim2.new(1, -30, 1, 0),
+						Parent = ob,
 					})
+
 					local check = icon("check", 14, false, Theme.Accent)
 					check.AnchorPoint = Vector2.new(1, 0.5)
 					check.Position = UDim2.new(1, -8, 0.5, 0)
 					check.Visible = selected[opt] == true
 					check.Parent = ob
 
-					ob.MouseEnter:Connect(function() tween(ob, TI, { BackgroundColor3 = Theme.ElementHover }) end)
-					ob.MouseLeave:Connect(function() tween(ob, TI, { BackgroundColor3 = Theme.Secondary }) end)
+					ob.MouseEnter:Connect(function()
+						tween(ob, TI, {
+							BackgroundColor3 = Theme.ElementHover
+						})
+					end)
+
+					ob.MouseLeave:Connect(function()
+						tween(ob, TI, {
+							BackgroundColor3 = Theme.Secondary
+						})
+					end)
+
 					ob.Activated:Connect(function()
 						if multi then
 							selected[opt] = not selected[opt]
 						else
-							table.clear(selected); selected[opt] = true
+							table.clear(selected)
+							selected[opt] = true
 						end
+
 						for _, b in optionBtns do
 							local on = selected[b.opt] == true
 							b.check.Visible = on
-							tween(b.txt, TI, { TextColor3 = on and Theme.Accent or Theme.SubText })
+
+							tween(b.txt, TI, {
+								TextColor3 = on and Theme.Accent or Theme.SubText
+							})
 						end
+
 						updateValLabel()
+
+						-- Fire Changed event
+						Changed:Fire(api:Get())
+
 						if dcfg.Callback then
 							if multi then
-								local out = {}
-								for _, o in options do if selected[o] then table.insert(out, o) end end
-								task.spawn(dcfg.Callback, out)
+								task.spawn(dcfg.Callback, api:Get())
 							else
 								task.spawn(dcfg.Callback, opt)
 							end
 						end
+
 						if not multi then
 							task.wait(0.05)
 							api._toggle(false)
 						end
 					end)
-					table.insert(optionBtns, { btn = ob, opt = opt, txt = txt, check = check })
+
+					table.insert(optionBtns, {
+						btn = ob,
+						opt = opt,
+						txt = txt,
+						check = check
+					})
 				end
+
 				updateValLabel()
 			end
 
 			local function openHeight()
 				local n = #options
-				if n == 0 then return 44 end
+
+				if n == 0 then
+					return 44
+				end
+
 				return 36 + (n * 28) + ((n - 1) * 2) + 8
 			end
 
 			local open = false
+
 			function api._toggle(force)
-				if force ~= nil then open = force else open = not open end
-				if open then list.Visible = true end
-				tween(row, TI_S, { Size = UDim2.new(1, 0, 0, open and openHeight() or 36) })
-				tween(chev, TI, { Rotation = open and 180 or 0 })
-				if not open then task.delay(0.12, function() if not open then list.Visible = false end end) end
+				if force ~= nil then
+					open = force
+				else
+					open = not open
+				end
+
+				if open then
+					list.Visible = true
+				end
+
+				tween(row, TI_S, {
+					Size = UDim2.new(1, 0, 0, open and openHeight() or 36)
+				})
+
+				tween(chev, TI, {
+					Rotation = open and 180 or 0
+				})
+
+				if not open then
+					task.delay(0.12, function()
+						if not open then
+							list.Visible = false
+						end
+					end)
+				end
 			end
-			header.Activated:Connect(function() api._toggle() end)
+
+			header.Activated:Connect(function()
+				api._toggle()
+			end)
 
 			function api:Refresh(newOpts)
 				options = newOpts or options
 				rebuild()
-				if open then api._toggle(true) end
+
+				if open then
+					api._toggle(true)
+				end
 			end
+
 			function api:Set(val)
 				table.clear(selected)
-				if type(val) == "table" then for _, x in val do selected[x] = true end
-				else selected[val] = true end
+
+				if type(val) == "table" then
+					for k, v in pairs(val) do
+						if type(k) == "number" then
+							selected[v] = true
+						elseif v == true then
+							selected[k] = true
+						end
+					end
+				else
+					selected[val] = true
+				end
+
 				rebuild()
+
+				Changed:Fire(api:Get())
 			end
+
 			function api:Get()
 				local out = {}
-				for _, o in options do if selected[o] then table.insert(out, o) end end
+
+				for _, o in options do
+					if selected[o] then
+						table.insert(out, o)
+					end
+				end
+
 				return multi and out or out[1]
 			end
+
 			function api:SetName(text)
 				DropdownText.Text = text
 			end
+
 			api.Instance = row
+
 			rebuild()
+
 			return api
 		end
 
@@ -1142,3 +1292,4 @@ function Library:CreateWindow(cfg)
 end
 
 return Library
+
